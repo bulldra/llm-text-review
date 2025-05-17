@@ -11,11 +11,11 @@ const INCLUDE_PATTERNS =
 	llmWriteEditConfig.get<string[]>('includePatterns') || []
 
 const LLM_REVIEWER_CONSOLE =
-	vscode.window.createOutputChannel('llm-write-review')
+        vscode.window.createOutputChannel('llm-text-review')
 const diagnosticCollection =
-	vscode.languages.createDiagnosticCollection('llm-write-review')
+        vscode.languages.createDiagnosticCollection('llm-text-review')
 
-LLM_REVIEWER_CONSOLE.appendLine('[llm-write-review] 拡張機能が初期化されました')
+LLM_REVIEWER_CONSOLE.appendLine('[llm-text-review] 拡張機能が初期化されました')
 
 function isTextDocument(languageId: string): boolean {
 	const ids = new Set([
@@ -71,9 +71,9 @@ export async function activate(ctx: vscode.ExtensionContext) {
 	const queue = new PQueue({ concurrency: 2 })
 
 	const lintIfNeeded = (doc: vscode.TextDocument) => {
-		LLM_REVIEWER_CONSOLE.appendLine(
-			`[llm-write-review] lintIfNeeded called for ${doc.fileName}`
-		)
+                LLM_REVIEWER_CONSOLE.appendLine(
+                        `[llm-text-review] lintIfNeeded called for ${doc.fileName}`
+                )
 		if (doc.isUntitled) return
 		if (!isTextDocument(doc.languageId)) return
 		if (shouldExclude(doc.uri.fsPath)) {
