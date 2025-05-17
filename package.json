@@ -37,13 +37,18 @@
 					"default": [],
 					"description": "レビュー対象に含めるファイルパターン（glob形式）。指定した場合は、これらのパターンのみが対象になります。"
 				},
-				"llmWriteEdit.autoReviewOnOpen": {
-					"type": "boolean",
-					"default": true,
-					"description": "ファイルを開いたときに自動レビューを実行するかどうか"
-				}
-			}
-		},
+                                "llmWriteEdit.autoReviewOnOpen": {
+                                        "type": "boolean",
+                                        "default": true,
+                                        "description": "ファイルを開いたときに自動レビューを実行するかどうか"
+                                },
+                                "llmWriteEdit.customInstructionFile": {
+                                        "type": "string",
+                                        "default": ".llm-text-review",
+                                        "description": "カスタムインストラクションファイルへのパス"
+                                }
+                        }
+                },
 		"commands": [
 			{
 				"command": "llmWriteEdit.reviewCurrentFile",

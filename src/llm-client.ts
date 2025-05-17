@@ -1,13 +1,16 @@
 import * as vscode from 'vscode'
+import * as fs from 'fs'
+import * as path from 'path'
 
 function cfg<T>(key: string): T {
 	return vscode.workspace.getConfiguration('llmWriteEdit').get<T>(key)!
 }
 
 export const LLM_CONFIG = {
-	MODEL: cfg<string>('model'),
-	PORT: cfg<number>('port'),
-	THREADS: cfg<number>('threads'),
+        MODEL: cfg<string>('model'),
+        PORT: cfg<number>('port'),
+        THREADS: cfg<number>('threads'),
+        CUSTOM_INSTRUCTION_FILE: cfg<string>('customInstructionFile'),
 }
 
 interface FunctionCallResponse {
@@ -86,13 +89,32 @@ const reviewFunctions = [
 	},
 ]
 
+async function readCustomInstructions(): Promise<string | null> {
+        const file = LLM_CONFIG.CUSTOM_INSTRUCTION_FILE
+        if (!file) {
+                return null
+        }
+        let targetPath = file
+        if (!path.isAbsolute(file)) {
+                const folders = vscode.workspace.workspaceFolders
+                if (folders && folders.length > 0) {
+                        targetPath = path.join(folders[0].uri.fsPath, file)
+                }
+        }
+        try {
+                return await fs.promises.readFile(targetPath, 'utf8')
+        } catch {
+                return null
+        }
+}
+
 export async function requestLLMReviewWithFunctionCalling(
-	doc: vscode.TextDocument
+        doc: vscode.TextDocument
 ): Promise<string> {
-	const prompt = [
-		'```',
-		doc.getText(),
-		'```',
+        const promptLines = [
+                '```',
+                doc.getText(),
+                '```',
 		'上記の文章をレビューし、誤字脱字・悪文・表現ミス・不自然な日本語・読みづらさ・論理の飛躍・冗長表現などを診断してください。',
 		'重要度は次の4つのいずれかから選択してください: [ERROR], [WARNING], [INFO], [HINT]',
 		'- [ERROR]: 誤字脱字や意味不明な文、重大な論理破綻',
@@ -108,8 +130,15 @@ export async function requestLLMReviewWithFunctionCalling(
 		'文章の長さ: ' + doc.lineCount + '行',
 		'',
 		'重要：位置情報（行番号や列番号）を指定しないでください。代わりに、問題のある箇所を特定できる文章断片（フレーズや文）を提供してください。',
-		'文章断片には最小限の必要なコンテキスト（特徴的な語句や前後の文脈）を含めてください。',
-	].join('\n')
+                '文章断片には最小限の必要なコンテキスト（特徴的な語句や前後の文脈）を含めてください。',
+        ]
+
+        const custom = await readCustomInstructions()
+        if (custom) {
+                promptLines.push(custom.trim())
+        }
+
+        const prompt = promptLines.join('\n')
 
 	const body = {
 		model: LLM_CONFIG.MODEL,
