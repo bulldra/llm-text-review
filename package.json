@@ -1,0 +1,96 @@
+{
+	"name": "llm-write-review",
+	"displayName": "LLM Write Review",
+	"description": "Local LLM-powered writing review as VS Code diagnostics",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.90.0"
+	},
+	"contributes": {
+		"configuration": {
+			"title": "LLM Writing Edit",
+			"properties": {
+				"llmWriteEdit.model": {
+					"type": "string",
+					"default": "qwen3-30b-a3b-mlx",
+					"description": "モデル名"
+				},
+				"llmWriteEdit.port": {
+					"type": "number",
+					"default": 1234,
+					"description": "LM Studio サーバポート"
+				},
+				"llmWriteEdit.excludePatterns": {
+					"type": "array",
+					"default": [
+						"**/.git/**",
+						"**/.vscode/**",
+						"**/node_modules/**",
+						"**/out/**",
+						"**/dist/**",
+						"**/build/**"
+					],
+					"description": "レビュー対象から除外するファイルパターン（glob形式）"
+				},
+				"llmWriteEdit.includePatterns": {
+					"type": "array",
+					"default": [],
+					"description": "レビュー対象に含めるファイルパターン（glob形式）。指定した場合は、これらのパターンのみが対象になります。"
+				},
+				"llmWriteEdit.autoReviewOnOpen": {
+					"type": "boolean",
+					"default": true,
+					"description": "ファイルを開いたときに自動レビューを実行するかどうか"
+				}
+			}
+		},
+		"commands": [
+			{
+				"command": "llmWriteEdit.reviewCurrentFile",
+				"title": "LLM: ファイルをレビュー",
+				"category": "LLM Writing Edit"
+			},
+			{
+				"command": "llmWriteEdit.toggleAutoReview",
+				"title": "LLM: 自動レビューの切り替え",
+				"category": "LLM Writing Edit"
+			},
+			{
+				"command": "llmWriteEdit.toggleAutoReviewOnOpen",
+				"title": "LLM: オープン時自動レビューの切り替え",
+				"category": "LLM Writing Edit"
+			}
+		]
+	},
+	"activationEvents": [
+		"onLanguage:markdown",
+		"onLanguage:plaintext",
+		"onLanguage:latex",
+		"onLanguage:tex",
+		"onLanguage:org",
+		"onLanguage:rst",
+		"onLanguage:md",
+		"onLanguage:txt"
+	],
+	"main": "./out/extension.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/bulldra/llm-write-review-extension.git"
+	},
+	"scripts": {
+		"watch": "esbuild src/extension.ts --bundle --platform=node --outfile=out/extension.js --format=cjs --sourcemap --watch  --external:vscode",
+		"build": "esbuild src/extension.ts --bundle --platform=node --outfile=out/extension.js --format=cjs --minify --external:vscode"
+	},
+	"dependencies": {
+		"minimatch": "^10.0.1",
+		"node-fetch": "^3.3.2",
+		"p-queue": "^8.1.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.30",
+		"@types/node-fetch": "^3.0.3",
+		"@types/vscode": "^1.90.0",
+		"esbuild": "^0.21.0",
+		"typescript": "^5.4.5"
+	}
+}
