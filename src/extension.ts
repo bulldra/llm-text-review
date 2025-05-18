@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { requestLLMReviewWithFunctionCalling, LLM_CONFIG } from './llm-client'
+import { isTextDocument, shouldExclude } from './utils'
 
 const lastRunMap = new Map<string, number>()
 
@@ -11,72 +12,24 @@ const INCLUDE_PATTERNS =
 	llmWriteEditConfig.get<string[]>('includePatterns') || []
 
 const LLM_REVIEWER_CONSOLE =
-	vscode.window.createOutputChannel('llm-write-review')
+        vscode.window.createOutputChannel('llm-text-review')
 const diagnosticCollection =
-	vscode.languages.createDiagnosticCollection('llm-write-review')
+        vscode.languages.createDiagnosticCollection('llm-text-review')
 
-LLM_REVIEWER_CONSOLE.appendLine('[llm-write-review] 拡張機能が初期化されました')
+LLM_REVIEWER_CONSOLE.appendLine('[llm-text-review] 拡張機能が初期化されました')
 
-function isTextDocument(languageId: string): boolean {
-	const ids = new Set([
-		'markdown',
-		'plaintext',
-		'latex',
-		'tex',
-		'rst',
-		'org',
-		'md',
-		'txt',
-	])
-	return ids.has(languageId)
-}
-
-function shouldExclude(fsPath: string): boolean {
-	const { relative } = require('path')
-	const { minimatch } = require('minimatch')
-	const workspaceFolders = vscode.workspace.workspaceFolders
-	if (!workspaceFolders || workspaceFolders.length === 0) {
-		return false
-	}
-	let relativePath: string | null = null
-	for (const folder of workspaceFolders) {
-		const folderPath = folder.uri.fsPath
-		if (fsPath.startsWith(folderPath)) {
-			relativePath = relative(folderPath, fsPath)
-			break
-		}
-	}
-
-	if (relativePath === null) {
-		return false
-	}
-
-	relativePath = relativePath.replace(/\\/g, '/')
-	if (INCLUDE_PATTERNS.length > 0) {
-		const included = INCLUDE_PATTERNS.some((pattern) =>
-			minimatch(relativePath!, pattern, { dot: true, matchBase: true })
-		)
-		if (!included) {
-			return true
-		}
-	}
-
-	return EXCLUDE_PATTERNS.some((pattern) =>
-		minimatch(relativePath!, pattern, { dot: true, matchBase: true })
-	)
-}
 
 export async function activate(ctx: vscode.ExtensionContext) {
 	const { default: PQueue } = await import('p-queue')
 	const queue = new PQueue({ concurrency: 2 })
 
 	const lintIfNeeded = (doc: vscode.TextDocument) => {
-		LLM_REVIEWER_CONSOLE.appendLine(
-			`[llm-write-review] lintIfNeeded called for ${doc.fileName}`
-		)
+                LLM_REVIEWER_CONSOLE.appendLine(
+                        `[llm-text-review] lintIfNeeded called for ${doc.fileName}`
+                )
 		if (doc.isUntitled) return
 		if (!isTextDocument(doc.languageId)) return
-		if (shouldExclude(doc.uri.fsPath)) {
+                if (shouldExclude(doc.uri.fsPath, EXCLUDE_PATTERNS, INCLUDE_PATTERNS)) {
 			return
 		}
 		queue.add(
@@ -112,7 +65,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
 				return
 			}
 
-			if (shouldExclude(doc.uri.fsPath)) {
+                        if (shouldExclude(doc.uri.fsPath, EXCLUDE_PATTERNS, INCLUDE_PATTERNS)) {
 				return
 			}
 
@@ -244,9 +197,8 @@ function updateDiagnostics(doc: vscode.TextDocument, reviewText: string): void {
 }
 
 async function lintDocument(doc: vscode.TextDocument): Promise<void> {
-	const uriString = doc.uri.toString()
-	const filePath = doc.fileName
-	const now = Date.now()
+        const uriString = doc.uri.toString()
+        const now = Date.now()
 	const last = lastRunMap.get(uriString) ?? 0
 	if (now - last < 30000) {
 		return

@@ -1,2 +1,2 @@
 npx vsce package
-ls -al llm-write-review-*.vsix
+ls -al llm-text-review-*.vsix

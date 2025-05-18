@@ -1,6 +1,4 @@
-# llm write review
-
----
+# llm-text-review
 
 ## LM Studio のインストール
 
